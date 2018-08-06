@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginxtest
+spec:
+  ports:
+  - name: http
+    port: 80
+    nodePort: 30000
+  selector:
+    app: app-nginxtest
+  type: NodePort
+
+
+---
+
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: app-nginxtest
+spec:
+  replicas: 2
+  strategy:
+    rollingUpdate:
+      maxSurge: 50%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  minReadySeconds: 30
+  template:
+    metadata:
+      labels:
+        app: app-nginxtest
+    spec:
+      imagePullSecrets:
+      - name: docker-registry
+      containers:
+        - name: nginxtest
+          imagePullPolicy: Always
+          image: $DOCKERIMAGE
+          ports:
+            - containerPort: 80
