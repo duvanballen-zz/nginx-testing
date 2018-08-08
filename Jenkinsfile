@@ -16,13 +16,29 @@ pipeline {
             stage ("compilar imagen de docker")
             {
                 steps {
-                    sh "${env.docker} build -t ${env.image} ."
+                    script {
+                    sh "git rev-parse HEAD > ${env.commitfile}"
+                    def COMM = ((String)(readFile("${env.commitfile}"))).toString().trim()
+                    sh "${env.docker} build -t ${env.image}:${COMM} ."
+                    }
+                }
+            }
+            stage ("subir imagen")
+            {
+                steps {
+                    script {
+                    def COMM = ((String)(readFile("${env.commitfile}"))).toString().trim()
+                    sh "${env.docker} push ${env.image}:${COMM}"
+                    }
                 }
             }
             stage ("reemplazar imagen de docker")
             {
                 steps {
-                    sh "DOCKERIMAGE=${env.image} envsubst < nginx.tpl.yaml > /tmp/nginx.yaml"
+                    script {
+                        def COMM = ((String)(readFile("${env.commitfile}"))).toString().trim()
+                        sh "DOCKERIMAGE=${env.image}:${COMM} envsubst < nginx.tpl.yaml > /tmp/nginx.yaml"
+                    }
                 }
             }
             stage ("desplegar contenedor")
